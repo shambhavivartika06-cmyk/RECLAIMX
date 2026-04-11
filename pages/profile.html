@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Profile — ReclaimX</title>
+  <link rel="stylesheet" href="../assets/css/global.css"/>
+  <link rel="icon" type="image/svg+xml" href="../assets/icons/favicon.svg"/>
+  <style>
+    .profile-header { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-lg); padding:28px; display:flex; align-items:center; gap:24px; margin-bottom:20px; }
+    .profile-avatar-lg { width:80px; height:80px; border-radius:50%; background:var(--accent-dim); border:2px solid rgba(0,212,170,0.4); display:flex; align-items:center; justify-content:center; font-size:2rem; font-weight:700; color:var(--accent); flex-shrink:0; font-family:var(--font-display); }
+    .profile-name { font-size:1.4rem; font-weight:700; margin-bottom:4px; }
+    .profile-email { font-size:0.82rem; color:var(--text-muted); font-family:var(--font-mono); margin-bottom:10px; }
+    .trust-bar-wrap { display:flex; align-items:center; gap:12px; margin-top:8px; }
+    .trust-bar-bg { flex:1; height:6px; background:var(--bg-elevated); border-radius:3px; overflow:hidden; }
+    .trust-bar-fill { height:100%; background:linear-gradient(90deg,var(--accent),#00ffcc); border-radius:3px; transition:width 1s ease; }
+    .stats-row { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:20px; }
+    .activity-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-lg); padding:24px; }
+    .activity-item { display:flex; gap:14px; align-items:center; padding:14px 0; border-bottom:1px solid var(--border); }
+    .activity-item:last-child { border-bottom:none; }
+    .activity-icon { width:38px; height:38px; border-radius:var(--radius-md); display:flex; align-items:center; justify-content:center; font-size:1.2rem; flex-shrink:0; background:var(--bg-elevated); border:1px solid var(--border); }
+    .activity-info { flex:1; }
+    .activity-name { font-size:0.875rem; font-weight:600; }
+    .activity-meta { font-size:0.72rem; color:var(--text-muted); font-family:var(--font-mono); margin-top:2px; }
+    @media(max-width:700px){ .stats-row{grid-template-columns:1fr 1fr;} .profile-header{flex-direction:column;text-align:center;} }
+  </style>
+</head>
+<body>
+<div class="app-shell">
+  <div id="sidebar-placeholder"></div>
+
+  <main class="main-content">
+    <header class="main-header">
+      <button id="menuBtn" style="display:none;background:none;border:none;color:var(--text-primary);cursor:pointer;margin-right:12px;padding:4px;" onclick="document.getElementById('appSidebar').classList.add('open')">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+      <div><h1>My Profile</h1><p>Your account overview and activity history.</p></div>
+      <button class="btn btn-ghost btn-sm" id="logoutBtn">Logout</button>
+    </header>
+
+    <div class="page-content">
+
+      <!-- Profile Header -->
+      <div class="profile-header">
+        <div class="profile-avatar-lg" id="profileAvatar" style="cursor:pointer;position:relative" title="Click to change photo">
+          <div id="avatarOverlay" style="position:absolute;inset:0;border-radius:50%;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;font-size:1.2rem">📷</div>
+        </div>
+        <!-- file input lives outside profileAvatar so .textContent = initials never destroys it -->
+        <input type="file" id="avatarInput" accept="image/jpeg,image/png,image/webp" style="display:none"/>
+        <div style="flex:1">
+          <div class="profile-name" id="profileName">Loading…</div>
+          <div class="profile-email" id="profileEmail">—</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <span class="badge badge-accent" id="profileLevel">🥉 Bronze</span>
+            <span class="badge badge-violet" id="profileCampus">Campus A</span>
+          </div>
+          <div class="trust-bar-wrap" style="margin-top:12px">
+            <span style="font-size:0.72rem;font-family:var(--font-mono);color:var(--text-muted);white-space:nowrap">Trust Score</span>
+            <div class="trust-bar-bg">
+              <div class="trust-bar-fill" id="trustBarFill" style="width:0%"></div>
+            </div>
+            <span style="font-size:0.82rem;font-weight:700;font-family:var(--font-display);color:var(--accent);min-width:28px;text-align:right" id="trustScore">0</span>
+          </div>
+          <div style="font-size:0.7rem;color:var(--text-muted);font-family:var(--font-mono);margin-top:4px" id="trustNextMsg"></div>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-label">Items Returned</div>
+          <div class="stat-value text-accent" id="statReturned">0</div>
+          <div class="stat-change">+10 pts each</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Active Reports</div>
+          <div class="stat-value" style="color:var(--violet)" id="statActive">0</div>
+          <div class="stat-change">Open lost / found</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Failed Claims</div>
+          <div class="stat-value" style="color:var(--danger)" id="statFailed">0</div>
+          <div class="stat-change">Suspends at 3</div>
+        </div>
+      </div>
+
+      <!-- Account Actions -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+        <div class="activity-card">
+          <div class="section-title" style="margin-bottom:16px">Account Settings</div>
+          <div class="form-group">
+            <label class="form-label">Display Name</label>
+            <input class="form-input" type="text" id="editName" placeholder="Your full name"/>
+          </div>
+          <button class="btn btn-primary" style="width:100%" id="saveBtn">Save Changes</button>
+        </div>
+        <div class="activity-card">
+          <div class="section-title" style="margin-bottom:16px">How Trust Score Works</div>
+          <div style="display:flex;flex-direction:column;gap:10px;font-size:0.82rem;color:var(--text-secondary)">
+            <div style="display:flex;gap:10px"><span style="color:var(--accent)">+10</span> Successful item return</div>
+            <div style="display:flex;gap:10px"><span style="color:var(--accent)">+5</span> Report verified by AI</div>
+            <div style="display:flex;gap:10px"><span style="color:var(--danger)">-5</span> Failed claim attempt</div>
+            <div class="divider" style="margin:8px 0"></div>
+            <div>🥉 Bronze: 0–49 pts</div>
+            <div>🥈 Silver: 50–99 pts</div>
+            <div>🥇 Gold: 100+ pts</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Activity -->
+      <div class="activity-card">
+        <div class="section-header">
+          <div class="section-title">Recent Activity</div>
+        </div>
+        <div id="activityList">
+          <div style="text-align:center;padding:20px;color:var(--text-muted);font-size:0.8rem;">Loading recent activity...</div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<div id="toastContainer" class="toast-container"></div>
+
+<script src="../assets/js/main.js"></script>
+<script>
+  fetch('../components/sidebar.html').then(r=>r.text()).then(html=>{ document.getElementById('sidebar-placeholder').innerHTML=html; });
+  fetch('../components/toast.html').then(r=>r.text()).then(html=>{ document.body.insertAdjacentHTML('beforeend',html); });
+
+  const user = JSON.parse(sessionStorage.getItem('rx_user') || 'null');
+  if (!user) { window.location.href = 'login.html'; throw new Error('redirect'); }
+
+    const name   = user.name || user.email || 'User';
+    const score  = user.trust_score || 0;
+    const level  = score >= 100 ? '🥇 Gold Hero' : score >= 50 ? '🥈 Silver Helper' : '🥉 Bronze Helper';
+    const pct    = Math.min((score / 100) * 100, 100);
+    const nextAt = score < 50 ? 50 : score < 100 ? 100 : null;
+
+    // Set initials without overwriting child nodes (overlay must stay in DOM)
+    const initialsText = name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
+    const avatarEl2 = document.getElementById('profileAvatar');
+    let initialsSpan = avatarEl2.querySelector('.avatar-initials');
+    if (!initialsSpan) {
+      initialsSpan = document.createElement('span');
+      initialsSpan.className = 'avatar-initials';
+      avatarEl2.insertBefore(initialsSpan, avatarEl2.firstChild);
+    }
+    initialsSpan.textContent = initialsText;
+    document.getElementById('profileName').textContent   = name;
+    document.getElementById('profileEmail').textContent  = user.email || '—';
+    document.getElementById('profileLevel').textContent  = level;
+    document.getElementById('trustScore').textContent    = score;
+    document.getElementById('editName').value            = name;
+
+    setTimeout(() => { document.getElementById('trustBarFill').style.width = pct + '%'; }, 300);
+
+    if (nextAt) {
+      document.getElementById('trustNextMsg').textContent = `${nextAt - score} pts to next level`;
+    }
+
+  // Save name
+document.getElementById('saveBtn').addEventListener('click', async () => {
+  const newName = document.getElementById('editName').value.trim();
+  if (!newName) { window.ReclaimX?.toast('Name cannot be empty.', 'error'); return; }
+
+  const btn = document.getElementById('saveBtn');
+  btn.textContent = 'Saving…';
+  btn.disabled = true;
+
+  try {
+    const token = sessionStorage.getItem('rx_token');
+    const res = await fetch(`${window.API_BASE}/api/auth/profile`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ name: newName })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+
+    // Update sessionStorage
+    const u = JSON.parse(sessionStorage.getItem('rx_user') || '{}');
+    u.name = newName;
+    sessionStorage.setItem('rx_user', JSON.stringify(u));
+
+    // Update UI immediately
+    document.getElementById('profileName').textContent   = newName;
+    document.getElementById('profileAvatar').textContent = newName.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
+
+    window.ReclaimX?.toast('Profile updated! ✓', 'success');
+  } catch(err) {
+    window.ReclaimX?.toast('Failed to save. Try again.', 'error');
+  } finally {
+    btn.textContent = 'Save Changes';
+    btn.disabled    = false;
+  }
+});
+
+  // Logout
+  document.getElementById('logoutBtn').addEventListener('click', () => {
+    sessionStorage.clear();
+    window.location.href = 'login.html';
+  });
+
+  // Fetch live stats and activity
+  const tkn = sessionStorage.getItem('rx_token');
+  if (tkn) {
+    fetch(`${window.API_BASE}/api/auth/me`, { headers: { 'Authorization': `Bearer ${tkn}` } })
+      .then(r => r.json())
+      .then(data => {
+        document.getElementById('statReturned').textContent = data.trust_score ? Math.floor(data.trust_score/10) : 0;
+        document.getElementById('statFailed').textContent   = data.failed_claims || 0;
+      }).catch(e => console.error(e));
+
+    fetch(`${window.API_BASE}/api/items/me`, { headers: { 'Authorization': `Bearer ${tkn}` } })
+      .then(r => r.json())
+      .then(data => {
+        const myItems = [...(data.lost||[]), ...(data.found||[])].sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
+        document.getElementById('statActive').textContent = myItems.length;
+        
+        const EMOJIS = { Accessories:'👜', Bags:'🎒', Documents:'🪪', Electronics:'📱', Clothing:'👕', Keys:'🔑', Books:'📚', Other:'📦' };
+        if (!myItems.length) {
+          document.getElementById('activityList').innerHTML = '<div style="color:var(--text-muted);font-size:0.8rem;padding:20px;text-align:center;">No recent activity found.</div>';
+          return;
+        }
+        
+        document.getElementById('activityList').innerHTML = myItems.map(item => {
+          const isLost = item.status === 'Lost' || item.status === 'Pending';
+          const emoji = item.status === 'Resolved' ? '✅' : (EMOJIS[item.category] || '📦');
+          const timeAgo = window.ReclaimX?.timeAgo(item.created_at) || 'Recently';
+          return `<div class="activity-item">
+            <div class="activity-icon">${emoji}</div>
+            <div class="activity-info">
+              <div class="activity-name">${item.item_name} — ${isLost ? 'Lost Report' : 'Found Report'}</div>
+              <div class="activity-meta">Reported ${timeAgo} · ${item.status}</div>
+            </div>
+            <span class="badge ${isLost ? 'badge-danger' : 'badge-accent'}">${item.status}</span>
+          </div>`;
+        }).join('');
+      }).catch(e => console.error(e));
+  }
+
+// Allow pressing Enter to save name
+  document.getElementById('editName').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') document.getElementById('saveBtn').click();
+});
+
+// ── Profile photo upload ────────────────────────────────────
+const avatarEl    = document.getElementById('profileAvatar');
+const avatarInput = document.getElementById('avatarInput');
+const overlay     = document.getElementById('avatarOverlay');
+
+avatarEl.addEventListener('mouseenter', () => overlay.style.display = 'flex');
+avatarEl.addEventListener('mouseleave', () => overlay.style.display = 'none');
+avatarEl.addEventListener('click', () => avatarInput.click());
+
+avatarInput.addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) { window.ReclaimX?.toast('Image too large. Max 5MB.', 'error'); return; }
+
+  // Preview immediately via FileReader
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const existingImg = avatarEl.querySelector('img');
+    if (existingImg) {
+      existingImg.src = ev.target.result;
+    } else {
+      const img = document.createElement('img');
+      img.src = ev.target.result;
+      img.style.cssText = 'width:100%;height:100%;border-radius:50%;object-fit:cover;position:absolute;inset:0;z-index:0;';
+      avatarEl.appendChild(img);
+      const textNode = Array.from(avatarEl.childNodes).find(n => n.nodeType === Node.TEXT_NODE);
+      if(textNode) textNode.remove();
+    }
+    overlay.style.zIndex = '1';
+  };
+  reader.readAsDataURL(file);
+
+  // Upload to Cloudinary via backend (single request)
+  window.ReclaimX?.toast('Uploading photo…', 'info');
+  const formData = new FormData();
+  formData.append('image', file);
+
+  try {
+    const token = sessionStorage.getItem('rx_token');
+    const res   = await fetch(`${window.API_BASE}/api/auth/avatar`, {
+      method:  'POST',
+      headers: { 'Authorization': `Bearer ${token}` },
+      body:    formData
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+
+    // Save photo URL to sessionStorage
+    const u = JSON.parse(sessionStorage.getItem('rx_user') || '{}');
+    u.photo = data.photoUrl;
+    sessionStorage.setItem('rx_user', JSON.stringify(u));
+
+    window.ReclaimX?.toast('Photo updated! ✓', 'success');
+  } catch(err) {
+    window.ReclaimX?.toast('Photo upload failed. Try again.', 'error');
+  }
+});
+</script>
+</body>
+</html>
